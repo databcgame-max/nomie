@@ -2047,14 +2047,14 @@
       --login-panel-width: min(100vw, 484px);
       --login-x: clamp(16px, 5vw, 24px);
       --login-header-height: clamp(50px, 8vh, 59px);
-      --login-content-top: clamp(88px, 18vh, 151px);
+      --login-content-gap: clamp(42px, 10vh, 92px);
       --login-tabs-height: clamp(39px, 6.4vh, 45px);
       --login-form-gap: clamp(28px, 6.5vh, 55px);
-      --login-input-height: clamp(44px, 7vh, 52px);
+      --login-input-height: clamp(48px, 7.4vh, 56px);
       --login-label-offset: clamp(22px, 4.4vh, 28px);
       --login-field-gap: clamp(38px, 7vh, 56px);
       --login-forgot-height: clamp(24px, 4.7vh, 35px);
-      --login-submit-height: clamp(48px, 8vh, 63px);
+      --login-submit-height: clamp(54px, 8.4vh, 68px);
       --login-submit-gap: clamp(16px, 3.8vh, 28px);
       --login-alt-padding: clamp(16px, 4.6vh, 38px);
       --login-small-button-height: clamp(42px, 6.8vh, 54px);
@@ -2112,16 +2112,19 @@
 
     .account-dialog > .dialog-content {
       height: var(--login-screen-height) !important;
+      max-height: var(--login-screen-height) !important;
       padding: 0 !important;
       background: #202524 !important;
       overflow-y: auto !important;
       overflow-x: hidden !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
     }
 
     .account-dialog .scroll-container {
-      min-height: 100% !important;
-      height: 100% !important;
-      padding-bottom: 0 !important;
+      min-height: calc(100% + 1px) !important;
+      height: auto !important;
+      padding-bottom: calc(28px + var(--login-safe-bottom)) !important;
       background: #202524 !important;
     }
 
@@ -2215,7 +2218,7 @@
 
     .account-dialog .w-full.flex-1.px-6.relative.z-10 {
       width: 100% !important;
-      padding: calc(var(--login-content-top) + var(--login-safe-top)) var(--login-x) 0 !important;
+      padding: calc(var(--login-safe-top) + var(--login-header-height) + var(--login-content-gap)) var(--login-x) 0 !important;
       margin: 0 !important;
       flex: 0 0 auto !important;
       max-height: none !important;
@@ -2557,14 +2560,14 @@
     @media (max-height: 820px) {
       html.dark,
       html.dark body {
-        --login-content-top: clamp(68px, 11vh, 86px);
+        --login-content-gap: clamp(36px, 6.5vh, 52px);
         --login-tabs-height: 39px;
         --login-form-gap: 28px;
-        --login-input-height: 44px;
+        --login-input-height: 48px;
         --login-label-offset: 24px;
         --login-field-gap: 36px;
         --login-forgot-height: 24px;
-        --login-submit-height: 48px;
+        --login-submit-height: 54px;
         --login-submit-gap: 16px;
         --login-alt-padding: 16px;
         --login-small-button-height: 42px;
